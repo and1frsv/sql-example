@@ -6,6 +6,8 @@
 Для построения графиков добавим timescaledb. Данные туда будут поступать автоматически через стороннее расширение для HA - ltss, в соответствующую таблицу.</p>
 Настроили, поехали.
 
+## Проверяем данные
+
 Первым делом смотрим структуру и типы данных. 
 
 ```shell
@@ -59,15 +61,17 @@ LIMIT 5;
 
 ```sql
 SELECT date_trunc('second', "time") AS "time", 
-       Regexp_replace(Regexp_replace(entity_id, 'sensor.', '', 'g'),'_3494546ed3b3','', 'g') AS "name", 
-       state::DECIMAL AS "value"
+		Regexp_replace(Regexp_replace(entity_id, 'sensor.', '', 'g'),'_3494546ed3b3','', 'g') AS "name", 
+		state::DECIMAL AS "value"
 FROM ltss
 WHERE entity_id LIKE '%shellyem3_3494546ed3b3_channel_a_power'
 		AND state <> 'unavailable'
 		AND "time" >='2023-04-19'
-GROUP BY  "time",2,3
-ORDER BY  1,2
+GROUP BY "time",2,3
+ORDER BY 1,2
 ```
+
+## Строим графики
 
 Можно строить график. Только вот отклонения будут краткосрочными, например включение чайника. Улучшим читаемость. Вспоминаем скользящее среднее.
 Для наглядности добавим смещение.
@@ -75,19 +79,19 @@ ORDER BY  1,2
 
 ```sql
 SELECT date_trunc('second', "time") AS "time", 
-       Regexp_replace(Regexp_replace(entity_id, 'sensor.', '', 'g'),'_3494546ed3b3','', 'g') AS "name", 
-       state::DECIMAL AS "value",
-	   round(AVG(state::DECIMAL) over w) +2000 as state_avg
+		Regexp_replace(Regexp_replace(entity_id, 'sensor.', '', 'g'),'_3494546ed3b3','', 'g') AS "name", 
+		state::DECIMAL AS "value",
+		round(AVG(state::DECIMAL) over w) +2000 as state_avg
 FROM ltss
 WHERE entity_id LIKE '%shellyem3_3494546ed3b3_channel_a_power'
 		AND state <> 'unavailable'
 		AND "time" >='2023-04-19'
-GROUP BY  "time",2,3
+GROUP BY "time",2,3
 window w as (
-  order by "time",2,3
-  rows between 20 preceding and 20 following
+		order by "time",2,3
+		rows between 20 preceding and 20 following
 )
-ORDER BY  1,2;
+ORDER BY 1,2;
 ```
 
 ![[graph_visualiser-1681898078971.png]](attachment/graph_visualiser-1681898078971.png)
@@ -99,30 +103,30 @@ ORDER BY  1,2;
 ```sql
 SELECT hour, AVG(state_avg) from(
 SELECT date_trunc('second', "time") AS "time", 
-       Regexp_replace(Regexp_replace(entity_id, 'sensor.', '', 'g'),'_3494546ed3b3','', 'g') AS "name", 
-       state::DECIMAL AS "value",
-	   round(AVG(state::DECIMAL) over w) as state_avg,
-       case extract(dow from time::timestamp)
-	  	when 0 then 'Sunday'
-    	when 1 then 'Monday'
-    	when 2 then 'Tuesday'
-    	when 3 then 'Wednesday'
+		Regexp_replace(Regexp_replace(entity_id, 'sensor.', '', 'g'),'_3494546ed3b3','', 'g') AS "name", 
+		state::DECIMAL AS "value",
+		round(AVG(state::DECIMAL) over w) as state_avg,
+		case extract(dow from time::timestamp)
+		when 0 then 'Sunday'
+		when 1 then 'Monday'
+		when 2 then 'Tuesday'
+		when 3 then 'Wednesday'
 		when 4 then 'Thursday'
 		when 5 then 'Friday'
-    	when 6 then 'Saturday'
+		when 6 then 'Saturday'
 		end dow,
 		extract(hour from time::timestamp) as hour
 FROM ltss
 WHERE entity_id LIKE '%shellyem3_3494546ed3b3_channel_a_power'
 		AND state <> 'unavailable'
 		AND "time" >='2023-04-12'
-GROUP BY  "time",2,3
+GROUP BY "time",2,3
 window w as (
-  order by "time",2,3
-  rows between 60 preceding and 60 following
+		order by "time",2,3
+		rows between 60 preceding and 60 following
 )
-ORDER BY  1,2)A
-GROUP BY  "hour"
+ORDER BY 1,2)A
+GROUP BY "hour"
 order by "hour"
 ```
 
@@ -134,30 +138,30 @@ order by "hour"
 ```sql
 SELECT dow, AVG(state_avg) from(
 SELECT date_trunc('second', "time") AS "time", 
-       Regexp_replace(Regexp_replace(entity_id, 'sensor.', '', 'g'),'_3494546ed3b3','', 'g') AS "name", 
-       state::DECIMAL AS "value",
-	   round(AVG(state::DECIMAL) over w) as state_avg,
-       case extract(dow from time::timestamp)
-	  	when 0 then '7 Sunday'
-    	when 1 then '1 Monday'
-    	when 2 then '2 Tuesday'
-    	when 3 then '3 Wednesday'
+		Regexp_replace(Regexp_replace(entity_id, 'sensor.', '', 'g'),'_3494546ed3b3','', 'g') AS "name", 
+		state::DECIMAL AS "value",
+		round(AVG(state::DECIMAL) over w) as state_avg,
+		case extract(dow from time::timestamp)
+		when 0 then '7 Sunday'
+		when 1 then '1 Monday'
+		when 2 then '2 Tuesday'
+		when 3 then '3 Wednesday'
 		when 4 then '4 Thursday'
 		when 5 then '5 Friday'
-    	when 6 then '6 Saturday'
+		when 6 then '6 Saturday'
 		end dow,
 		extract(hour from time::timestamp) as hour
 FROM ltss
 WHERE entity_id LIKE '%shellyem3_3494546ed3b3_channel_a_power'
 		AND state <> 'unavailable'
 		AND "time" >='2023-04-12'
-GROUP BY  "time",2,3
+GROUP BY "time",2,3
 window w as (
-  order by "time",2,3
-  rows between 60 preceding and 60 following
+		order by "time",2,3
+		rows between 60 preceding and 60 following
 )
-ORDER BY  1,2)A
-GROUP BY  "dow"
+ORDER BY 1,2)A
+GROUP BY "dow"
 order by "dow"
 ```
 
