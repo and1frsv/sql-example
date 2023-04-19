@@ -54,8 +54,8 @@ LIMIT 5;
 - Слишком длинные названия для сущностей.
 - Переменная со значением, по которому будет строиться график - текстовая и может содержать состояние unavailable.
 
-Отсчем лишее у времени при помощи [date_trunc](https://www.postgresql.org/docs/9.1/functions-datetime.html#FUNCTIONS-DATETIME-TRUNC).
-Лишний текст уберем при помощи функции [regexp_replace](https://www.postgresqltutorial.com/postgresql-string-functions/regexp_replace/). 
+Сократим время до секунд [date_trunc](https://www.postgresql.org/docs/9.1/functions-datetime.html#FUNCTIONS-DATETIME-TRUNC).<br>
+Уберем лишний текст из названий [regexp_replace](https://www.postgresqltutorial.com/postgresql-string-functions/regexp_replace/). <br>
 Текст сущности [переводим](https://learnsql.com/cookbook/how-to-convert-a-string-to-a-numeric-value-in-postgresql/) в числовой формат, а чтобы не возникало ошибки ставим фильтр <>. Можно и здесь использовать регулярное выражение, выбирая числа, но в данном случае возможен лишь цифровой формат или состояние unavailable. 
 
 
@@ -73,7 +73,7 @@ ORDER BY 1,2
 
 ## Строим графики
 
-Можно строить график. Только вот отклонения будут краткосрочными, например включение чайника. Улучшим читаемость. Вспоминаем скользящее среднее.
+Можно строить график. Только вот отклонения будут краткосрочными, например включение чайника. Улучшим читаемость. Вспоминаем скользящее среднее.<br>
 Для наглядности добавим смещение.
 
 
@@ -96,7 +96,7 @@ ORDER BY 1,2;
 
 ![[graph_visualiser-1681898078971.png]](attachment/graph_visualiser-1681898078971.png)
 
-Выглядит отвратительно.
+Выглядит отвратительно.<br>
 Давайте сделаем выборку по часам.
 
 
@@ -132,7 +132,7 @@ order by "hour"
 
 ![[graph_visualiser-1681897799886.png]](attachment/graph_visualiser-1681897799886.png)
 
-Ну и по дням недели.
+И по дням недели.<br>
 Цифры в названиях для корректной сортировки без использования дополнительных вычислений.
 
 ```sql
@@ -167,6 +167,6 @@ order by "dow"
 
 ![[graph_visualiser-1681898894962.png]](attachment/graph_visualiser-1681898894962.png)
 
-Графики и запросы делал в pgadmin4 для последующего экспорта в grafana. 
+Графики и запросы делал в pgadmin4 для последующего экспорта в grafana. <br>
 BI системы позволят не производить некоторые операции (grafana нет).
 
